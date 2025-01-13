@@ -25,6 +25,7 @@ func GenerateWindow() {
 	urlEntry := widget.NewEntry()
 	urlEntry.SetPlaceHolder("Cole o link do YouTube aqui")
 
+	resolutionLabel := widget.NewLabel("Selecione a resolução do vídeo:")
 	var resolutionSelected string
 	selectResolutionMenu := widget.NewSelect([]string{"480p", "720", "1080p", "1440p", "2160p"}, func(resolution string) {
 		resolutionSelected = strings.TrimSuffix(resolution, "p")
@@ -76,10 +77,10 @@ func GenerateWindow() {
 		}
 		go downloadVideo(info, window, progressBar, progressChan)
 	})
-
 	content := container.NewVBox(
 		widget.NewLabel("Baixar Vídeo do YouTube"),
 		urlEntry,
+		resolutionLabel,
 		selectResolutionMenu,
 		selectFolderButton,
 		pathLabel,
