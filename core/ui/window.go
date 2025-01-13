@@ -14,7 +14,7 @@ import (
 func GenerateWindow() {
 	myApp := app.New()
 	window := myApp.NewWindow("YouTube Video Downloader")
-	window.Resize(fyne.NewSize(1024, 576))
+	window.Resize(fyne.NewSize(820, 640))
 
 	iconResource, err := fyne.LoadResourceFromPath("icon.ico")
 	if err != nil {
