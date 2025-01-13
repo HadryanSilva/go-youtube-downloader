@@ -8,6 +8,7 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 	"github.com/HadryanSilva/go-youtube-downloader/core/downloader"
+	"strings"
 )
 
 func GenerateWindow() {
@@ -18,10 +19,16 @@ func GenerateWindow() {
 	urlEntry := widget.NewEntry()
 	urlEntry.SetPlaceHolder("Cole o link do YouTube aqui")
 
+	var resolutionSelected string
+	selectResolutionMenu := widget.NewSelect([]string{"480p", "720", "1080p", "1440p", "2160p"}, func(resolution string) {
+		resolutionSelected = strings.TrimSuffix(resolution, "p")
+	})
+	selectResolutionMenu.PlaceHolder = "Selecione a resolução"
+
 	var outputPath string
 	pathLabel := widget.NewLabel("Pasta de destino: Não selecionada")
 
-	selectButton := widget.NewButton("Selecionar pasta", func() {
+	selectFolderButton := widget.NewButton("Selecionar pasta", func() {
 		newFolderDialog := dialog.NewFolderOpen(func(uri fyne.ListableURI, err error) {
 			if err != nil {
 				dialog.ShowError(err, window)
@@ -35,7 +42,7 @@ func GenerateWindow() {
 		}, window)
 		newFolderDialog.Show()
 	})
-	selectButton.Resize(fyne.NewSize(100, 100))
+	selectFolderButton.Resize(fyne.NewSize(100, 100))
 
 	progressBar := widget.NewProgressBar()
 	progressBar.Hide()
@@ -49,16 +56,26 @@ func GenerateWindow() {
 			dialog.ShowError(fmt.Errorf("por favor, selecione uma pasta de destino"), window)
 			return
 		}
+		if resolutionSelected == "" {
+			dialog.ShowError(fmt.Errorf("por favor, selecione uma resolução"), window)
+			return
+		}
 
 		progressBar.Show()
 		progressChan := make(chan float64)
-		go downloadVideo(urlEntry.Text, outputPath, window, progressBar, progressChan)
+		info := downloader.DownloadInfo{
+			Url:        urlEntry.Text,
+			Path:       outputPath,
+			Resolution: resolutionSelected,
+		}
+		go downloadVideo(info, window, progressBar, progressChan)
 	})
 
 	content := container.NewVBox(
 		widget.NewLabel("Baixar Vídeo do YouTube"),
 		urlEntry,
-		selectButton,
+		selectResolutionMenu,
+		selectFolderButton,
 		pathLabel,
 		downloadButton,
 		progressBar,
@@ -68,7 +85,7 @@ func GenerateWindow() {
 	window.ShowAndRun()
 }
 
-func downloadVideo(url, outputPath string, window fyne.Window, progress *widget.ProgressBar, progressChan chan float64) {
+func downloadVideo(info downloader.DownloadInfo, window fyne.Window, progress *widget.ProgressBar, progressChan chan float64) {
 	defer close(progressChan)
 
 	go func() {
@@ -77,7 +94,7 @@ func downloadVideo(url, outputPath string, window fyne.Window, progress *widget.
 		}
 	}()
 
-	err := downloader.DownloadVideo(url, outputPath, progressChan)
+	err := downloader.DownloadVideo(info, progressChan)
 
 	progress.Hide()
 	if err != nil {
